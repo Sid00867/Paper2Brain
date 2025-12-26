@@ -1,0 +1,43 @@
+.brand-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 5000;
+
+  display: flex;
+  justify-content: center;
+  padding-top: 10px;
+  padding-bottom: 10px;
+
+  /* backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px); */
+}
+
+/* Gradient fade that extends BELOW the text */
+/* .brand-overlay::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  height: 80px;
+
+  background: linear-gradient(
+    to bottom,
+    rgba(251, 251, 251, 0.6),
+    rgba(251, 251, 251, 0.3),
+    rgba(251, 251, 251, 0)
+  );
+} */
+
+/* Text */
+.brand-text {
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-size: 31px;
+  font-weight: 400;
+  color: #222;
+  opacity: 0.95;
+  letter-spacing: 0.2px;
+}

@@ -1,0 +1,23 @@
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  background: #fbfbfb;
+}
+
+/* Root layout */
+.app-root {
+  height: 100%;
+  width: 100%;
+}
+
+/* This is CRITICAL for ReactFlow */
+.canvas-wrapper {
+  height: 100%;
+  width: 100%;
+}
+
+
+.diagram {
+  width: 100%;
+  height: 100%;
+}

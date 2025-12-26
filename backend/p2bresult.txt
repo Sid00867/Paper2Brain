@@ -1,0 +1,177 @@
+C:\Users\Siddharth\Desktop\AI Stuff\Paper2Brain>python agno_agent.py
+[Paper2Brain] MainAgent: processing source text
+[Paper2Brain] MainAgent: running
+[Paper2Brain] MainAgent: completed
+[Paper2Brain] MainAgent: produced instructions and contexts
+[Paper2Brain] ExtractorAgent: extracting nodes
+[Paper2Brain] ExtractorAgent: running
+[Paper2Brain] ExtractorAgent: completed
+[Paper2Brain] RelationshipAgent: building relationships
+[Paper2Brain] RelationshipAgent: running
+[Paper2Brain] RelationshipAgent: completed
+[Paper2Brain] JustifierAgent: generating explanations
+[Paper2Brain] JustifierAgent: running
+[Paper2Brain] JustifierAgent: completed
+
+================ MAIN AGENT OUTPUT ================
+
+
+--- EXTRACTOR_INSTRUCTIONS ---
+Define:
+- Structural roles that qualify an entity to become a node include the Planner, Encoder, Transition Model, Observation Model, Reward Model, and Action Repeat.
+- Categories that must NOT become nodes include mathematical details, algorithm names, and narrative descriptions.
+- Structural role completion is allowed for standard roles such as inputs, outputs, state representations, and control signals, but must be conservative and only include roles that are widely understood and necessary for coherence.
+- The intended abstraction level is focused on operational and architectural structure, rather than conceptual labels or algorithm names.
+
+--- EXTRACTOR_CONTEXT ---
+The system consists of a Planner that uses a Transition Model, Observation Model, and Reward Model to predict future states and rewards. The Encoder infers the current state from past observations and actions. The Action Repeat determines how many times an action is repeated before the next observation is made. The system operates in a latent space, where the Transition Model and Encoder work together to predict future states and rewards.
+
+--- RELATIONSHIP_INSTRUCTIONS ---
+Define:
+- Valid relationships include transitions between states, predictions of future rewards, and dependencies between the Planner, Encoder, Transition Model, Observation Model, and Reward Model.
+- Relationships reflect runtime behavior, including the flow of information between components and the sequence of actions taken by the Planner.
+- Constraints on directionality, multiplicity, and connectivity include the requirement that the Planner can only consider a limited number of action sequences, and that the Encoder can only infer the current state from past observations and actions.
+
+--- RELATIONSHIP_CONTEXT ---
+The Planner uses the Transition Model and Reward Model to predict future rewards and states, and selects the best action sequence based on these predictions. The Encoder infers the current state from past observations and actions, and provides this information to the Planner. The Transition Model and Observation Model work together to predict future states and observations, and the Reward Model predicts future rewards. The Action Repeat determines how many times an action is repeated before the next observation is made, and affects the flow of information between components.
+
+--- JUSTIFIER_INSTRUCTIONS ---
+Define:
+- The expected depth and style of explanation is focused on architectural reasoning and mathematical intuition, with an emphasis on how the components of the system work together to achieve the desired outcome.
+- The justification should emphasize the importance of the Planner, Encoder, Transition Model, Observation Model, and Reward Model, and how they interact to produce the desired behavior.
+- Explicit focus areas include the role of the Action Repeat in determining the flow of information between components, and the importance of the Encoder in inferring the current state from past observations and actions.
+
+--- JUSTIFIER_CONTEXT ---
+The system's ability to learn latent dynamics and plan in latent space is due to the combination of the Planner, Encoder, Transition Model, Observation Model, and Reward Model. The Planner's ability to select the best action sequence based on predicted future rewards and states is critical to the system's performance, and relies on the accurate predictions of the Transition Model and Reward Model. The Encoder's ability to infer the current state from past observations and actions is also crucial, as it provides the necessary information for the Planner to make informed decisions. The Action Repeat plays a key role in determining the flow of information between components, and affects the system's ability to learn and adapt to new situations.
+
+================ NODES ================
+
+<nodes>
+Planner | model
+Transition Model | model
+Observation Model | model
+Reward Model | model
+Encoder | component
+Action Repeat | component
+</nodes>
+
+================ RELATIONSHIPS ================
+
+<relationships>
+Planner | uses | Transition Model | label: predicts future states
+Planner | uses | Reward Model | label: predicts future rewards
+Planner | receives | Encoder | label: current state inference
+Encoder | infers from | Observation Model | label: past observations
+Encoder | considers | Action Repeat | label: past actions context
+Transition Model | works with | Observation Model | label: predicts future observations
+Transition Model | uses | Reward Model | label: reward prediction context
+Planner | sends | Action Repeat | label: action sequence decision
+Action Repeat | affects | Observation Model | label: observation timing
+</relationships>
+
+================ EXPLANATIONS ================
+
+<explanations>
+
+<node>
+name: Planner
+role: Decision-making model
+details: The Planner is a model responsible for selecting the best action sequence based on predicted future rewards and states. It relies on the accurate predictions of the Transition Model and Reward Model to make informed decisions.
+</node>
+
+<node>
+name: Transition Model
+role: Predictive model for state transitions
+details: The Transition Model is a model that predicts future states based on the current state and actions taken. It works in conjunction with the Observation Model to predict future observations and uses the Reward Model for reward prediction context.
+</node>
+
+<node>
+name: Observation Model
+role: Predictive model for observations
+details: The Observation Model is a model that predicts future observations based on the current state and actions taken. It provides information to the Encoder for inferring the current state and works with the Transition Model to predict future states.
+</node>
+
+<node>
+name: Reward Model
+role: Predictive model for rewards
+details: The Reward Model is a model that predicts future rewards based on the current state and actions taken. It provides reward prediction context to the Transition Model and is used by the Planner to select the best action sequence.
+</node>
+
+<node>
+name: Encoder
+role: State inference component
+details: The Encoder is a component that infers the current state from past observations and actions. It considers the context of past actions through the Action Repeat and uses the Observation Model to inform its inference.
+</node>
+
+<node>
+name: Action Repeat
+role: Action sequence component
+details: The Action Repeat is a component that determines the flow of information between components and affects the system's ability to learn and adapt to new situations. It receives action sequence decisions from the Planner and affects the timing of observations in the Observation Model.
+</node>
+
+<relationship>
+from: Planner
+to: Transition Model
+type: uses
+meaning: The Planner uses the Transition Model to predict future states, which is critical for selecting the best action sequence. This connection allows the Planner to make informed decisions based on the predicted outcomes of different actions.
+</relationship>
+
+<relationship>
+from: Planner
+to: Reward Model
+type: uses
+meaning: The Planner uses the Reward Model to predict future rewards, which is essential for evaluating the desirability of different action sequences. This connection enables the Planner to select actions that maximize expected rewards.
+</relationship>
+
+<relationship>
+from: Planner
+to: Encoder
+type: receives
+meaning: The Planner receives the current state inference from the Encoder, which is necessary for making informed decisions. This connection provides the Planner with the information it needs to evaluate different action sequences.
+</relationship>
+
+<relationship>
+from: Encoder
+to: Observation Model
+type: infers from
+meaning: The Encoder infers the current state from the Observation Model, which provides information about past observations. This connection allows the Encoder to make accurate state inferences based on the available data.
+</relationship>
+
+<relationship>
+from: Encoder
+to: Action Repeat
+type: considers
+meaning: The Encoder considers the context of past actions through the Action Repeat, which provides information about the sequence of actions taken. This connection enables the Encoder to make more accurate state inferences by taking into account the actions that led to the current state.
+</relationship>
+
+<relationship>
+from: Transition Model
+to: Observation Model
+type: works with
+meaning: The Transition Model works with the Observation Model to predict future observations, which is necessary for evaluating the outcomes of different actions. This connection allows the Transition Model to make accurate predictions based on the available data.
+</relationship>
+
+<relationship>
+from: Transition Model
+to: Reward Model
+type: uses
+meaning: The Transition Model uses the Reward Model for reward prediction context, which is necessary for evaluating the desirability of different actions. This connection enables the Transition Model to make accurate predictions based on the expected rewards.
+</relationship>
+
+<relationship>
+from: Planner
+to: Action Repeat
+type: sends
+meaning: The Planner sends action sequence decisions to the Action Repeat, which determines the flow of information between components. This connection allows the Planner to control the sequence of actions taken and adapt to changing situations.
+</relationship>
+
+<relationship>
+from: Action Repeat
+to: Observation Model
+type: affects
+meaning: The Action Repeat affects the timing of observations in the Observation Model, which can impact the system's ability to learn and adapt to new situations. This connection highlights the importance of considering the sequence of actions when making decisions.
+</relationship>
+
+</explanations>
+
+C:\Users\Siddharth\Desktop\AI Stuff\Paper2Brain>
