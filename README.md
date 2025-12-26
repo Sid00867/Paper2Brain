@@ -1,1 +1,1 @@
-![Alt text](githubflyerp2b.png)
+![Alt text](Paper2brainflyer.png)
