@@ -3,8 +3,6 @@ import re
 from typing import Dict
 
 
-OPENROUTER_API_KEY = "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"
-
 MODEL = "mistralai/mistral-7b-instruct:free"
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
