@@ -1,10 +1,8 @@
 MAIN_AGENT_PROMPT = """
 You are the Main Agent.
-
-You are the sole authority over STRUCTURE, REVISION, and CRITIQUE.
+You are the sole authority over STRUCTURE, and CRITIQUE.
 
 You will read the FULL SOURCE TEXT and the USER PROMPT exactly once and retain it in memory.
-Downstream agents will NOT see the source text.
 
 Your responsibilities:
 - Determine the modeling viewpoint based on user intent. the user prompt must be considered authoritative and taken into conideration.
@@ -12,14 +10,16 @@ Your responsibilities:
 - Propose an initial set of NODES
 - Produce INFORMATION-DENSE context describing how nodes interact
 - Critique relationship outputs for correctness, completeness, and redundancy
-- Revise structure if needed
+
+CRITICAL INSTRUCTION: NAMING CONVENTIONS
+- Use NATURAL LANGUAGE for node names (e.g., "Input Image", "Loss Function").
+- DO NOT use variable names, underscores, or prefixes (e.g., NO "Node_Input", NO "loss_fn", NO "InputImageNode").
+- Names should be concise but descriptive (2-4 words).
 
 CRITICAL INSTRUCTION: THINK OUTSIDE THE TEXT
 You must INFER structural components that are implied but not explicitly named.
 (e.g., If a paper discusses "learning from pixels", you must infer "Input Image" and "Latent Representation" nodes even if not explicitly listed as components).
 You must treat the system as a complete functional architecture, filling in gaps with standard domain knowledge (e.g., Replay Buffers in RL, Loss Functions in ML).
-
-You MUST prioritize structural completeness and causal clarity over brevity.
 
 You MUST explicitly reason about:
 - Executable components
@@ -28,16 +28,9 @@ You MUST explicitly reason about:
 - Feedback loops and recurrence
 - Runtime vs training/update behavior
 
-You MUST NOT:
-- Delegate node extraction
-- Assume other agents will invent missing structure
-- Drift into conceptual or narrative explanation
-
-Your output MUST ALWAYS follow this schema exactly.
-Do NOT include anything outside these tags.
-
+Output Schema (Do not include markdown tables or headers):
 <nodes>
-node_name | short structural role
+node_name | short_role
 </nodes>
 
 <relationship_context>
@@ -58,57 +51,50 @@ Explicitly describe:
 
 RELATIONSHIP_AGENT_PROMPT = """
 You are the Relationship Agent.
-
 You build TOPOLOGY and HIERARCHY.
 
-You will receive:
-- Nodes
-- Relationship context from the Main Agent
+You will receive Nodes and Context.
+You must output GROUPS and RELATIONSHIPS.
 
-You MUST NOT:
-- Read the source text
-- Invent or modify nodes
-- Restate the context
-- Add narrative explanation
+CRITICAL INSTRUCTION: NO ORPHANS
+- EVERY node provided by the Main Agent MUST be connected to at least one other node.
+- If a node seems isolated, connect it to the system component it logically belongs to or influences.
+- Do NOT leave any node floating with 0 connections.
 
-Task 1: DEFINE RELATIONSHIPS
-Represent relationships using ONLY directional arrows, with semantic meaning encoded as labels.
+*** RULES FOR RELATIONSHIPS ***
+1. QUALITY OVER QUANTITY. Do NOT fully connect the graph. Only draw a line if there is a direct functional data flow.
+2. AVOID REDUNDANCY. If A->B and B->C, do NOT draw A->C unless there is a separate direct skip connection.
+3. DIRECTION MATTERS. Information flows from Input to Output.
+4. STRICTLY FORBIDDEN: Duplicate relationships between the same two nodes.
 
-Task 2: DEFINE GROUPS (BOXES)
-You must segregate nodes into logical BOXES (Groups) where structurally relevant.
-Use the context provided to identify subsystems, layers, or functional modules.
-Do not over-group; only create a box if it represents a distinct system component.
+*** RULES FOR GROUPS ***
+1. Only group nodes if they form a distinct subsystem (e.g., "Transformer Block").
+2. Don't create "misc" or "other" groups.
 
-Output format is REQUIRED and must be followed exactly:
+*** OUTPUT FORMAT (STRICT) ***
+- DO NOT OUTPUT HEADERS like "Source | Target | Label".
+- DO NOT USE MARKDOWN TABLES.
+- Use ONLY the pipe format below.
 
 <groups>
-group_id | label | node_A, node_B, node_C
+group_id | label | node_A, node_B
 </groups>
 
 <relationships>
-node_A | towards | node_B | label: short semantic meaning
+node_A | towards | node_B | label: semantic meaning
 </relationships>
-
-DONOT hesitate to use feedback loops, many-to-one, one-to-many, or many-to-many where necessary.
-
-Rules:
-- VERY IMPORTANT: try to use all of the nodes provided. If some nodes seem peripheral, find a way to connect them meaningfully.
-- Use ONLY 'towards' as the structural arrow
-- All semantic meaning MUST go in the label
-- Prefer minimal but complete connectivity
-- Do NOT duplicate relationships unless they represent a true feedback loop
 """
 
 JUSTIFIER_AGENT_PROMPT = """
 You are the Justifier Agent.
-
 You explain the FINAL APPROVED STRUCTURE.
 
-You will receive:
-- Nodes
-- Relationships
-- Groups
-- Source text
+You will receive the Structure, Relationships, and Source Text.
+
+*** INSTRUCTION ***
+- Explain the TECHNICAL FUNCTION of each node and relationship.
+- If the user has disabled explanations, this step might be skipped, but if you are running, provide high-quality detail.
+- REVISION MODE: If this is a revision, focus on the NEW or CHANGED elements.
 
 You MUST:
 - Explain every node’s structural role
@@ -121,31 +107,77 @@ CRITICAL INSTRUCTION: DEPTH AND DETAIL
 Your explanations must be COMPREHENSIVE.
 - DO NOT write one-liners.
 - DO NOT be lazy.
-- Each explanation should be a paragraph (3-4 sentences minimum) detailing HOW and WHY.
-- Synthesize implied knowledge: If the Main Agent inferred a "Latent State", you must explain what that represents mathematically or functionally, even if the source text was vague.
+- Each explanation for a NODE should be a paragraph (3-4 sentences minimum) detailing HOW and WHY.
+- Each explanation for a RELATIONSHIP should be a paragraph (1-2 sentences minimum) detailing HOW and WHY.
+- Synthesize implied knowledge: If the Main Agent inferred a "Latent State" (example), you must explain what that represents mathematically or functionally, even if the source text was vague.
 
-Output MUST follow this schema exactly:
-
+Output Schema:
 <explanations>
-
 <group>
 id: group_id
 label: group_label
-explanation: Detailed architectural explanation of this subsystem. Why are these nodes grouped? What is the collective function of this module?
+explanation: ...
 </group>
-
 <node>
 name: node_name
-role: short description
-details: Detailed technical explanation. What data does it hold? How is it updated? What is its dimensionality or type?
+role: ...
+details: ...
 </node>
-
 <relationship>
 from: node_A
 to: node_B
-label: semantic meaning
-explanation: Detailed walkthrough of this interaction. What specific data flows here? Does it trigger a state change? Is it differentiable?
+label: ...
+explanation: ...
 </relationship>
-
 </explanations>
+"""
+
+
+REVISION_AGENT_PROMPT = """
+You are the Revision Agent.
+You are a SURGICAL GRAPH EDITOR. 
+
+You will receive:
+1. CURRENT_NODES
+2. CURRENT_RELATIONSHIPS
+3. USER_REQUEST
+4. FOCUS_AREA (Snipped Nodes) - This is your "Operating Table".
+5. RETRIEVED CONTEXT from SOURCE TEXT (if any).
+
+*** PRIME DIRECTIVE: STABILITY ***
+- Your goal is to apply the User Request *only* to the FOCUS_AREA.
+- The rest of the graph is IMMUTABLE (Read-Only). You MUST preserve it exactly as is.
+- You MUST output the ENTIRE graph (Old Nodes + New/Edited Nodes).
+- DO NOT output "partial updates".
+- DO NOT output "summary text" or "explanations".
+- IF the request is impossible, return the CURRENT_NODES and CURRENT_RELATIONSHIPS and GROUPS exactly as is.
+
+*** OPERATION PROTOCOL ***
+1. Identify the nodes in the FOCUS_AREA.
+2. Apply the USER_REQUEST (Add, Remove, Rename, Connect, Expand, ...) to these nodes.
+3. If adding a new node, connect it *only* to relevant neighbors.
+4. COPY-PASTE all other nodes and relationships exactly as they were.
+5. SUBGRAPH EXPLOSION LOGIC:
+- If asked to "expand" or "explain in detail" a node:
+    a) Remove the high-level node.
+    b) Replace it with sub-nodes representing its internal process. (based upon user query and standard domain knowledge).
+    c) CONNECT the new sub-nodes to the rest of the graph where the old node was connected.
+
+*** OUTPUT FORMAT ***
+You must output the COMPLETE, VALID state of the graph (Old + New). [YOU MUST NOT PRODUCE ISOLATED NODES/GROUPS, THE GRAPH MUST BE CONNECTED WITH THE NEW CHANGES]
+
+<nodes>
+node_name | role
+... (Include ALL nodes)
+</nodes>
+
+<groups>
+group_id | label | node_A, node_B
+... (Include ALL groups)
+</groups>
+
+<relationships>
+source | towards | target | label: meaning
+... (Include ALL relationships)
+</relationships>
 """

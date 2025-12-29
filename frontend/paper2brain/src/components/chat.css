@@ -139,6 +139,11 @@
   transition: color 0.2s;
 }
 
+.upload-btn.disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .upload-btn:hover {
   color: #263238;
 }
@@ -252,95 +257,116 @@
   background: #37474f;
 }
 
-/* --- Submitted State --- */
-.submitted-view {
-  animation: fadeIn 0.4s ease;
-}
-
-.status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #2e7d32;
-  font-weight: bold;
-  margin-bottom: 30px;
-  background: #e8f5e9;
-  padding: 12px 18px;
-  border-radius: 6px;
-  font-size: 14px;
-}
-
-.pulse-dot {
-  width: 8px;
-  height: 8px;
-  background: #2e7d32;
-  border-radius: 50%;
-  box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7);
-  animation: pulse 2s infinite;
-}
-
-.read-only-section {
-  margin-bottom: 25px;
-}
-
-.read-only-files, .read-only-prompt {
-  background: #f1f1f1;
-  padding: 12px;
-  border-radius: 4px;
-  color: #444;
-  font-size: 14px;
-  border: 1px solid #e0e0e0;
-  line-height: 1.5;
-  word-wrap: break-word; /* Prevents long words breaking layout */
-}
-
-.read-only-prompt {
-  font-style: italic;
-}
-
-.info-box {
-  margin-top: 40px;
-  font-size: 13px;
-  color: #777;
-  text-align: center;
-  line-height: 1.5;
-  border-top: 1px solid #eee;
-  padding-top: 20px;
-}
-
-.new-session-btn {
+/* --- Revision UI --- */
+.revision-container {
   margin-top: 15px;
-  width: 100%;
-  background: #fff;
-  border: 1px solid #546e7a;
-  color: #546e7a;
-  padding: 12px;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.snip-context-pill {
+  background: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #bbdefb;
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 12px;
+  display: flex;
   align-items: center;
   gap: 8px;
+  align-self: flex-start;
+  animation: fadeIn 0.3s ease;
+}
+
+.snip-context-pill .clear-snip {
+  background: none;
+  border: none;
+  color: #1565c0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+  opacity: 0.6;
+}
+.snip-context-pill .clear-snip:hover { opacity: 1; }
+
+.revision-bar {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end; /* Align to bottom of textarea */
+}
+
+.snip-tool-btn {
+  background: #f5f5f5;
+  border: 1px solid #ccc;
+  color: #666;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
   transition: all 0.2s;
-  font-family: 'Georgia', serif;
 }
 
-.new-session-btn:hover {
-  background: #eceff1;
-  color: #37474f;
-  border-color: #37474f;
+.snip-tool-btn:hover:not(:disabled) {
+  background: #eee;
+  color: #333;
 }
 
-@keyframes pulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(46, 125, 50, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0); }
+.snip-tool-btn.active {
+  background: #ffebee;
+  color: #c62828;
+  border-color: #ef9a9a;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+.revision-input {
+  flex: 1;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: none;
+  height: 38px; /* Compact height initially */
+  min-height: 38px;
+  max-height: 80px;
+  line-height: 20px;
+  transition: height 0.2s;
+}
+
+.revision-input:focus {
+  outline: none;
+  border-color: #78909c;
+  height: 60px; /* Expand on focus */
+}
+
+.send-revision-btn {
+  background: #455a64;
+  color: white;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.send-revision-btn:disabled {
+  background: #cfd8dc;
+  cursor: not-allowed;
+}
+
+.send-revision-btn:not(:disabled):hover {
+  background: #37474f;
 }
 
 /* --- Terminal Styles --- */
@@ -352,7 +378,7 @@
   box-shadow: 0 4px 15px rgba(0,0,0,0.2);
   display: flex;
   flex-direction: column;
-  flex: 1; /* Fill remaining space if possible */
+  flex: 1; 
   min-height: 300px;
 }
 
@@ -396,7 +422,7 @@
 }
 
 .message {
-  color: #4ec9b0; /* VS Code-like green/blue */
+  color: #4ec9b0; 
   word-break: break-word;
 }
 
@@ -410,56 +436,271 @@
   50% { opacity: 0; }
 }
 
-/* --- Completion Actions --- */
-.completion-actions {
-  margin-top: 20px;
-  animation: fadeIn 0.5s ease;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.success-banner {
-  background: #e8f5e9;
-  color: #2e7d32;
-  text-align: center;
-  padding: 10px;
-  border-radius: 6px;
-  font-weight: bold;
-  font-size: 14px;
-  margin-bottom: 15px;
-  border: 1px solid #c8e6c9;
-}
+/* (Previous Global Styles kept same) */
 
-.terminal-line.error .message {
-  color: #ff6b6b;
-  font-weight: bold;
-}
+/* ... (Keep existing .generator-panel, .panel-header etc.) ... */
 
-.error-banner {
-  background: #ffebee;
-  color: #c62828;
-  text-align: center;
+/* --- REVISION UI (New) --- */
+.revision-container {
+  margin-top: 15px;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
   padding: 12px;
-  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.revision-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.revision-header .label {
+  margin: 0;
+  font-size: 11px;
+  color: #999;
+}
+
+.snip-toggle {
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.snip-toggle:hover:not(:disabled) {
+  background: #eee;
+  color: #333;
+}
+
+.snip-toggle.active {
+  background: #e3f2fd;
+  color: #1565c0;
+  border-color: #90caf9;
+}
+
+/* Snip Tray */
+.snip-tray {
+  background: #f9f9f9;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.tray-label {
+  font-size: 11px;
+  color: #777;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 6px;
   font-weight: bold;
+}
+
+.tray-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.snip-tag {
+  background: #fff;
+  border: 1px solid #ddd;
+  color: #333;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.snip-tag button {
+  background: none;
+  border: none;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.snip-tag button:hover {
+  color: #d32f2f;
+}
+
+/* Revision Input */
+.revision-input-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.revision-input {
+  flex: 1;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 10px;
+  font-family: inherit;
   font-size: 14px;
-  margin-bottom: 10px;
-  border: 1px solid #ef9a9a;
+  resize: vertical; /* Allow vertical resize */
+  min-height: 60px; /* Larger by default */
+  max-height: 200px;
+  line-height: 1.4;
+  color: #333;
+}
+
+.revision-input:focus {
+  outline: none;
+  border-color: #78909c;
+  box-shadow: 0 0 0 2px rgba(120, 144, 156, 0.2);
+}
+
+.send-revision-btn {
+  width: 40px;
+  height: 40px;
+  background: #455a64;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  margin-bottom: 10px; /* Align with bottom of text */
 }
 
-.retry-btn {
+.send-revision-btn:disabled {
+  background: #cfd8dc;
+  cursor: not-allowed;
+}
+
+.send-revision-btn:not(:disabled):hover {
+  background: #37474f;
+}
+
+/* Restore New Session Button */
+.new-session-btn {
+  margin-top: 20px;
   width: 100%;
-  background: #c62828;
-  color: #fff;
-  border: none;
+  background: #fff;
+  border: 1px solid #546e7a;
+  color: #546e7a;
   padding: 12px;
   border-radius: 6px;
   font-weight: bold;
   cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
   font-family: 'Georgia', serif;
 }
 
-.retry-btn:hover {
-  background: #b71c1c;
+.new-session-btn:hover:not(:disabled) {
+  background: #eceff1;
+  color: #37474f;
+  border-color: #37474f;
+}
+
+.chk-label {
+    font-size: 14px;
+    color: #555;
+    user-select: none;
+    cursor: pointer;
+}
+
+.revision-container {
+  margin-top: 25px; /* Increased top margin */
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px; /* Increased padding */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Increased gap between elements */
+}
+
+.revision-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+/* Snip Tray - Added breathing room */
+.snip-tray {
+  background: #fdfdfd;
+  border: 1px dashed #d0d0d0;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tray-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px; /* More space between tags */
+}
+
+.snip-tag {
+  background: #fff;
+  border: 1px solid #cce0ff;
+  color: #0044cc;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+  transition: all 0.2s;
+}
+
+.snip-tag:hover {
+  background: #f0f7ff;
+  border-color: #99c2ff;
+}
+
+/* Input Wrapper Spacing */
+.revision-input-wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  margin-top: 5px;
+}
+
+.revision-input {
+  /* ... existing styles ... */
+  padding: 12px; /* More internal padding */
+}
+
+/* Chat History Spacing */
+.chat-msg {
+  margin-bottom: 18px; /* Space between chat bubbles */
+  line-height: 1.6;
 }

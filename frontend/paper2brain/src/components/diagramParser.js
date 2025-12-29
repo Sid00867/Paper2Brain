@@ -1,6 +1,5 @@
 // src/diagramParser.js
 
-// A palette of distinct, soft architectural colors
 const PALETTE = [
   { group: "#e3f2fd", node: "#bbdefb" }, // Blue
   { group: "#f3e5f5", node: "#e1bee7" }, // Purple
@@ -13,103 +12,155 @@ const PALETTE = [
 ];
 
 export const parseDiagramResponse = (response) => {
-  const { explanations, relationships } = response;
+  const { structure, relationships, explanations } = response;
   
   const groups = [];
   const nodes = [];
   const links = [];
 
-  // --- Helper: Extract blocks by tag ---
-  const extractBlocks = (text, tag) => {
-    const regex = new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`, 'g');
-    const matches = [];
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-      matches.push(match[1].trim());
+  // --- Helper: Strict but Space-Tolerant Section Extractor ---
+  const extractSection = (text, tag) => {
+    if (!text) return [];
+    
+    // Regex Logic:
+    // 1. <\s*tag\s*>  : Matches opening tag with spaces (e.g. < nodes >)
+    // 2. ([\s\S]*?)   : Captures content non-greedily
+    // 3. <\/\s*tag\s*>: REQUIRES strict closing tag (e.g. </nodes>)
+    const regex = new RegExp(`<\\s*${tag}\\s*>([\\s\\S]*?)<\\/\\s*${tag}\\s*>`, 'i');
+    
+    const match = regex.exec(text);
+    if (match && match[1]) {
+      return match[1].trim().split('\n').filter(line => line.trim().length > 0);
     }
-    return matches;
+    return [];
   };
 
-  // --- Helper: Parse key-value pairs ---
-  const parseProps = (block) => {
-    const lines = block.split('\n');
-    const props = {};
-    lines.forEach(line => {
-      const splitIndex = line.indexOf(':');
-      if (splitIndex > -1) {
-        const key = line.substring(0, splitIndex).trim().toLowerCase();
-        const value = line.substring(splitIndex + 1).trim();
-        props[key] = value;
-      }
-    });
-    return props;
+  // --- Helper: Parse Explanations ---
+  const parseExplanations = (xmlText) => {
+    const map = { nodes: {}, rels: {}, groups: {} };
+    if (!xmlText) return map;
+
+    try {
+        // Updated regex to handle spaces but require closing tags
+        const nodeBlocks = xmlText.match(/<\s*node\s*>[\s\S]*?<\/\s*node\s*>/gi) || [];
+        nodeBlocks.forEach(block => {
+            const nameMatch = block.match(/name:\s*(.*?)(?:\n|$)/i);
+            const detailsMatch = block.match(/details:\s*([\s\S]*?)(?:<\/\s*node\s*>|$)/i);
+            if (nameMatch) {
+                const name = nameMatch[1].trim();
+                const details = detailsMatch ? detailsMatch[1].trim() : "";
+                map.nodes[name] = details;
+            }
+        });
+
+        const relBlocks = xmlText.match(/<\s*relationship\s*>[\s\S]*?<\/\s*relationship\s*>/gi) || [];
+        relBlocks.forEach(block => {
+            const fromMatch = block.match(/from:\s*(.*?)(?:\n|$)/i);
+            const toMatch = block.match(/to:\s*(.*?)(?:\n|$)/i);
+            const explMatch = block.match(/explanation:\s*([\s\S]*?)(?:<\/\s*relationship\s*>|$)/i);
+            if (fromMatch && toMatch) {
+                const key = `${fromMatch[1].trim()}|${toMatch[1].trim()}`;
+                map.rels[key] = explMatch ? explMatch[1].trim() : "";
+            }
+        });
+        
+        const groupBlocks = xmlText.match(/<\s*group\s*>[\s\S]*?<\/\s*group\s*>/gi) || [];
+        groupBlocks.forEach(block => {
+            const idMatch = block.match(/id:\s*(.*?)(?:\n|$)/i);
+            const explMatch = block.match(/explanation:\s*([\s\S]*?)(?:<\/\s*group\s*>|$)/i);
+            if (idMatch) {
+                const id = idMatch[1].trim();
+                map.groups[id] = explMatch ? explMatch[1].trim() : "";
+            }
+        });
+    } catch (e) {
+        console.warn("Explanation Parsing Failed:", e);
+    }
+
+    return map;
   };
 
-  // 1. Parse Groups and Assign Colors
-  const groupBlocks = extractBlocks(explanations, 'group');
+  const explMap = parseExplanations(explanations);
+
+  // 1. Parse Groups
+  const groupLines = extractSection(relationships, 'groups');
   const groupIdToColorMap = {};
+  const nodeParentMap = {};
 
-  groupBlocks.forEach((block, index) => {
-    const p = parseProps(block);
-    if (p.id) {
-      // Cycle through palette
+  groupLines.forEach((line, index) => {
+    if (line.toLowerCase().includes("group |") || line.toLowerCase().includes("id |")) return;
+    if (!line.includes("|")) return;
+
+    const parts = line.split('|').map(s => s.trim());
+    if (parts.length >= 3) {
+      const id = parts[0];
+      const label = parts[1];
+      const children = parts[2].split(',').map(s => s.trim());
+
       const theme = PALETTE[index % PALETTE.length];
-      groupIdToColorMap[p.id] = theme; // Store for nodes to use later
+      groupIdToColorMap[id] = theme;
+
+      children.forEach(child => {
+          nodeParentMap[child] = id;
+      });
 
       groups.push({
-        id: p.id,
-        label: p.label || "Group",
+        id: id,
+        label: label,
         color: theme.group,
-        info: p.explanation || "No info"
+        info: explMap.groups[id] || "Group Container" 
       });
     }
   });
 
-  // 2. Parse Nodes and Inherit Colors
-  const nodeParentMap = {};
-  const rawGroupBlocks = extractBlocks(relationships, 'groups');
-  if (rawGroupBlocks.length > 0) {
-    const lines = rawGroupBlocks[0].split('\n').filter(l => l.trim());
-    lines.forEach(line => {
-      const parts = line.split('|');
-      if (parts.length >= 3) {
-        const gId = parts[0].trim();
-        const nodeNames = parts[2].split(',').map(n => n.trim());
-        nodeNames.forEach(name => {
-          nodeParentMap[name] = gId;
-        });
-      }
-    });
-  }
+  // 2. Parse Relationships
+  const linkLines = extractSection(relationships, 'relationships');
+  
+  linkLines.forEach(line => {
+    if (line.toLowerCase().includes("source |") || line.toLowerCase().includes("node_a |")) return;
 
-  const nodeBlocks = extractBlocks(explanations, 'node');
-  nodeBlocks.forEach(block => {
-    const p = parseProps(block);
-    if (p.name) {
-      const parentId = nodeParentMap[p.name];
-      const theme = groupIdToColorMap[parentId];
-      
-      nodes.push({
-        id: p.name,
-        label: p.name,
-        parent: parentId || null,
-        // Use assigned node color, or white if ungrouped
-        color: theme ? theme.node : "#ffffff", 
-        info: p.details || p.role || "No info"
-      });
-    }
-  });
+    const parts = line.split('|').map(s => s.trim());
+    if (parts.length >= 4) {
+      const source = parts[0];
+      const target = parts[2];
+      const label = parts[3].replace(/^label:\s*/i, "");
 
-  // 3. Parse Relationships
-  const linkBlocks = extractBlocks(explanations, 'relationship');
-  linkBlocks.forEach(block => {
-    const p = parseProps(block);
-    if (p.from && p.to) {
+      const key = `${source}|${target}`;
+      const richInfo = explMap.rels[key];
+
       links.push({
-        source: p.from,
-        target: p.to,
-        label: p.label || "",
-        info: p.explanation || ""
+        source: source,
+        target: target,
+        label: label,
+        info: richInfo || label 
+      });
+    }
+  });
+
+  // 3. Parse Nodes
+  const nodeLines = extractSection(structure, 'nodes');
+  
+  nodeLines.forEach(line => {
+    if (line.toLowerCase().includes("node_name |") || line.toLowerCase().includes("role")) return;
+    
+    const parts = line.split('|').map(s => s.trim());
+    if (parts.length >= 1) {
+      const id = parts[0];
+      const role = parts[1] || "Component";
+      
+      const parentId = nodeParentMap[id];
+      const theme = parentId ? groupIdToColorMap[parentId] : null;
+      const richInfo = explMap.nodes[id];
+
+      // RAW OUTPUT: No prefix cleaning, no replacement
+      const displayLabel = id; 
+
+      nodes.push({
+        id: id,
+        label: displayLabel,
+        parent: parentId || null,
+        color: theme ? theme.node : "#ffffff", 
+        info: richInfo || role
       });
     }
   });
