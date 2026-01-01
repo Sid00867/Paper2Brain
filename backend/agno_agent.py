@@ -99,11 +99,22 @@ def get_relevant_context(source_text: str, query: str, context_size: int = 3000)
 class LLMWorker:
     def __init__(self, name, system_prompt):
         self.name = name
-        self.agent = Agent(name=name, model=Groq(id="llama-3.3-70b-versatile"), markdown=False)
+        # self.agent = Agent(name=name, model=Groq(id="llama-3.3-70b-versatile"), markdown=False)
+        self.agent = Agent(name=name, model=Groq(id="openai/gpt-oss-120b"), markdown=False)        
         self.system_prompt = system_prompt
 
     def run(self, prompt: str) -> str:
-        return self.agent.run(f"{self.system_prompt}\n\n{prompt}").content
+            # We need to handle the <think> tags here to prevent parser crashes
+            raw_response = self.agent.run(f"{self.system_prompt}\n\n{prompt}").content
+            return self._clean_thinking_tokens(raw_response)
+
+        # --- NEW HELPER FUNCTION ---
+    def _clean_thinking_tokens(self, text: str) -> str:
+        if not text: return ""
+        # Remove the <think>...</think> block usually at the start
+        import re
+        cleaned = re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL)
+        return cleaned.strip()
 
 class Paper2BrainPipeline:
     def __init__(self):

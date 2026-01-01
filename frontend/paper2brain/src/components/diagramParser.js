@@ -36,47 +36,91 @@ export const parseDiagramResponse = (response) => {
   };
 
   // --- Helper: Parse Explanations ---
+// --- FIX: Hybrid Explanation Parser (XML + Text Support) ---
   const parseExplanations = (xmlText) => {
     const map = { nodes: {}, rels: {}, groups: {} };
     if (!xmlText) return map;
 
     try {
-        // Updated regex to handle spaces but require closing tags
+        // 1. Parse Nodes
         const nodeBlocks = xmlText.match(/<\s*node\s*>[\s\S]*?<\/\s*node\s*>/gi) || [];
         nodeBlocks.forEach(block => {
-            const nameMatch = block.match(/name:\s*(.*?)(?:\n|$)/i);
-            const detailsMatch = block.match(/details:\s*([\s\S]*?)(?:<\/\s*node\s*>|$)/i);
-            if (nameMatch) {
-                const name = nameMatch[1].trim();
-                const details = detailsMatch ? detailsMatch[1].trim() : "";
-                map.nodes[name] = details;
+            let name = "";
+            let details = "";
+            
+            // Try XML Tags first (<name>...</name>)
+            const xmlName = block.match(/<name>([\s\S]*?)<\/name>/i);
+            const xmlDetails = block.match(/<details>([\s\S]*?)<\/details>/i);
+            
+            if (xmlName) {
+                name = xmlName[1].trim();
+                details = xmlDetails ? xmlDetails[1].trim() : "";
+            } else {
+                // Fallback to Key:Value Text format
+                const textName = block.match(/name:\s*(.*?)(?:\n|$)/i);
+                const textDetails = block.match(/details:\s*([\s\S]*?)(?:<\/\s*node\s*>|$)/i);
+                if (textName) {
+                    name = textName[1].trim();
+                    details = textDetails ? textDetails[1].trim() : "";
+                }
             }
+            if (name) map.nodes[name] = details;
         });
 
+        // 2. Parse Relationships
         const relBlocks = xmlText.match(/<\s*relationship\s*>[\s\S]*?<\/\s*relationship\s*>/gi) || [];
         relBlocks.forEach(block => {
-            const fromMatch = block.match(/from:\s*(.*?)(?:\n|$)/i);
-            const toMatch = block.match(/to:\s*(.*?)(?:\n|$)/i);
-            const explMatch = block.match(/explanation:\s*([\s\S]*?)(?:<\/\s*relationship\s*>|$)/i);
-            if (fromMatch && toMatch) {
-                const key = `${fromMatch[1].trim()}|${toMatch[1].trim()}`;
-                map.rels[key] = explMatch ? explMatch[1].trim() : "";
+            let from = "", to = "", expl = "";
+
+            // Try XML Tags
+            const xmlFrom = block.match(/<from>([\s\S]*?)<\/from>/i);
+            const xmlTo = block.match(/<to>([\s\S]*?)<\/to>/i);
+            const xmlExpl = block.match(/<explanation>([\s\S]*?)<\/explanation>/i);
+
+            if (xmlFrom && xmlTo) {
+                from = xmlFrom[1].trim();
+                to = xmlTo[1].trim();
+                expl = xmlExpl ? xmlExpl[1].trim() : "";
+            } else {
+                // Fallback Text
+                const textFrom = block.match(/from:\s*(.*?)(?:\n|$)/i);
+                const textTo = block.match(/to:\s*(.*?)(?:\n|$)/i);
+                const textExpl = block.match(/explanation:\s*([\s\S]*?)(?:<\/\s*relationship\s*>|$)/i);
+                
+                if (textFrom && textTo) {
+                    from = textFrom[1].trim();
+                    to = textTo[1].trim();
+                    expl = textExpl ? textExpl[1].trim() : "";
+                }
             }
+            if (from && to) map.rels[`${from}|${to}`] = expl;
         });
         
+        // 3. Parse Groups
         const groupBlocks = xmlText.match(/<\s*group\s*>[\s\S]*?<\/\s*group\s*>/gi) || [];
         groupBlocks.forEach(block => {
-            const idMatch = block.match(/id:\s*(.*?)(?:\n|$)/i);
-            const explMatch = block.match(/explanation:\s*([\s\S]*?)(?:<\/\s*group\s*>|$)/i);
-            if (idMatch) {
-                const id = idMatch[1].trim();
-                map.groups[id] = explMatch ? explMatch[1].trim() : "";
+            let id = "", expl = "";
+            
+            // Try XML Tags
+            const xmlId = block.match(/<id>([\s\S]*?)<\/id>/i);
+            const xmlExpl = block.match(/<explanation>([\s\S]*?)<\/explanation>/i);
+            
+            if (xmlId) {
+                id = xmlId[1].trim();
+                expl = xmlExpl ? xmlExpl[1].trim() : "";
+            } else {
+                // Fallback Text
+                const textId = block.match(/id:\s*(.*?)(?:\n|$)/i);
+                const textExpl = block.match(/explanation:\s*([\s\S]*?)(?:<\/\s*group\s*>|$)/i);
+                if (textId) {
+                    id = textId[1].trim();
+                    expl = textExpl ? textExpl[1].trim() : "";
+                }
             }
+            if (id) map.groups[id] = expl;
         });
-    } catch (e) {
-        console.warn("Explanation Parsing Failed:", e);
-    }
 
+    } catch (e) { console.warn("Explanation Parsing Failed:", e); }
     return map;
   };
 
