@@ -38,6 +38,17 @@ def get_llama_text(file_path):
     except Exception as e: raise ValueError(f"LlamaParse failed: {str(e)}")
 
 
+@app.get("/api/models")
+def get_models():
+    return {
+        "models": [
+            {"id": "openai/gpt-oss-120b", "name": "GPT-OSS 120B (Most Intelligent)"},
+            {"id": "llama-3.3-70b-versatile", "name": "Llama 3.3 70B (Faster)"},
+        ],
+        "default": "openai/gpt-oss-120b"
+    }
+
+
 # --- NEW: Debug Helper to Print & Yield ---
 async def debug_and_stream(generator_func):
     """Iterates through the agent generator, prints the FINAL result to console, and streams to client."""
@@ -55,10 +66,10 @@ async def debug_and_stream(generator_func):
 
 # --- Updated Generators using the Debug Helper ---
 
-async def stream_generator(source_text: str, user_prompt: str, skip_explanations: bool, iterations: int):
+async def stream_generator(source_text: str, user_prompt: str, skip_explanations: bool, iterations: int, model_id: str):
     try:
-        pipeline = Paper2BrainPipeline()
-        # Wrap the generator in our debug helper
+        # Pass model_id to the pipeline
+        pipeline = Paper2BrainPipeline(model_id=model_id)
         gen = pipeline.run_generator(source_text, user_prompt, skip_explanations, iterations)
         async for chunk in debug_and_stream(gen):
             yield chunk
@@ -81,6 +92,7 @@ async def generate_diagram(
     skip_explanations: bool = Form(False),
     use_fast_parse: bool = Form(False),
     iterations: int = Form(2),
+    model_id: str = Form("openai/gpt-oss-120b"),
     file: UploadFile = File(...)
 ):
     temp_filename = f"temp_{file.filename}"
@@ -99,7 +111,7 @@ async def generate_diagram(
             raise HTTPException(status_code=400, detail="Document empty.")
 
         return StreamingResponse(
-            stream_generator(source_text, prompt, skip_explanations, iterations),
+            stream_generator(source_text, prompt, skip_explanations, iterations, model_id),
             media_type="application/x-ndjson"
         )
     except Exception as e:

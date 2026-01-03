@@ -19,7 +19,7 @@ CRITICAL INSTRUCTION: NAMING CONVENTIONS
 CRITICAL INSTRUCTION: THINK OUTSIDE THE TEXT
 You must INFER structural components that are implied but not explicitly named.
 (e.g., If a paper discusses "learning from pixels", you must infer "Input Image" and "Latent Representation" nodes even if not explicitly listed as components).
-You must treat the system as a complete functional architecture, filling in gaps with standard domain knowledge BUT PLEASE DO IT ONLY IF YOU ARE SURE THEY ARE RELEVANT TO THE TEXT, DO NOT INTRODUCE FEATURES NOT IN/IMPLIED BY THE ORIGINAL TEXT (e.g., Replay Buffers in RL, Loss Functions in ML).
+You must treat the system as a complete functional architecture, filling in gaps with standard domain knowledge BUT PLEASE DO IT ONLY IF YOU ARE SURE THEY ARE RELEVANT TO THE TEXT, DO NOT INTRODUCE/INVENT FEATURES or DETAILS NOT IN/IMPLIED BY THE ORIGINAL TEXT.
 
 You MUST explicitly reason about:
 - Executable components

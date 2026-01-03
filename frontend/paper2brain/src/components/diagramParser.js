@@ -11,6 +11,9 @@ const PALETTE = [
   { group: "#e0f2f1", node: "#b2dfdb" }, // Teal
 ];
 
+// Helper: Normalize IDs for fuzzy matching (case-insensitive trimming)
+const normalizeId = (id) => (id ? id.trim().toLowerCase() : "");
+
 export const parseDiagramResponse = (response) => {
   const { structure, relationships, explanations } = response;
   
@@ -18,16 +21,11 @@ export const parseDiagramResponse = (response) => {
   const nodes = [];
   const links = [];
 
-  // --- Helper: Strict but Space-Tolerant Section Extractor ---
+  // --- Helper: Robust Section Extractor ---
   const extractSection = (text, tag) => {
     if (!text) return [];
-    
-    // Regex Logic:
-    // 1. <\s*tag\s*>  : Matches opening tag with spaces (e.g. < nodes >)
-    // 2. ([\s\S]*?)   : Captures content non-greedily
-    // 3. <\/\s*tag\s*>: REQUIRES strict closing tag (e.g. </nodes>)
+    // Regex matches the tag block content
     const regex = new RegExp(`<\\s*${tag}\\s*>([\\s\\S]*?)<\\/\\s*${tag}\\s*>`, 'i');
-    
     const match = regex.exec(text);
     if (match && match[1]) {
       return match[1].trim().split('\n').filter(line => line.trim().length > 0);
@@ -35,89 +33,63 @@ export const parseDiagramResponse = (response) => {
     return [];
   };
 
-  // --- Helper: Parse Explanations ---
-// --- FIX: Hybrid Explanation Parser (XML + Text Support) ---
+  // --- Helper: Robust Line Splitter ---
+  // Splits a line by '|' but limits the number of splits to avoid breaking content
+  // e.g., "ID | Label | Content | Extra Pipe" -> ["ID", "Label", "Content | Extra Pipe"]
+  const splitLine = (line, maxParts) => {
+    const parts = line.split('|').map(s => s.trim());
+    if (parts.length <= maxParts) return parts;
+    
+    // If we have extra pipes, rejoin the overflow into the last part
+    const base = parts.slice(0, maxParts - 1);
+    const overflow = parts.slice(maxParts - 1).join(' | ');
+    return [...base, overflow];
+  };
+
   const parseExplanations = (xmlText) => {
     const map = { nodes: {}, rels: {}, groups: {} };
     if (!xmlText) return map;
 
     try {
-        // 1. Parse Nodes
+        // XML PARSING (Preferred)
         const nodeBlocks = xmlText.match(/<\s*node\s*>[\s\S]*?<\/\s*node\s*>/gi) || [];
         nodeBlocks.forEach(block => {
-            let name = "";
-            let details = "";
-            
-            // Try XML Tags first (<name>...</name>)
-            const xmlName = block.match(/<name>([\s\S]*?)<\/name>/i);
-            const xmlDetails = block.match(/<details>([\s\S]*?)<\/details>/i);
-            
-            if (xmlName) {
-                name = xmlName[1].trim();
-                details = xmlDetails ? xmlDetails[1].trim() : "";
-            } else {
-                // Fallback to Key:Value Text format
-                const textName = block.match(/name:\s*(.*?)(?:\n|$)/i);
-                const textDetails = block.match(/details:\s*([\s\S]*?)(?:<\/\s*node\s*>|$)/i);
-                if (textName) {
-                    name = textName[1].trim();
-                    details = textDetails ? textDetails[1].trim() : "";
-                }
+            const nameMatch = block.match(/<name>([\s\S]*?)<\/name>/i);
+            const detailsMatch = block.match(/<details>([\s\S]*?)<\/details>/i);
+            if (nameMatch) {
+                // Store BOTH exact and normalized keys for lookup
+                const name = nameMatch[1].trim();
+                map.nodes[name] = detailsMatch ? detailsMatch[1].trim() : "";
+                map.nodes[normalizeId(name)] = map.nodes[name]; 
             }
-            if (name) map.nodes[name] = details;
         });
 
-        // 2. Parse Relationships
+        // Parse Relationships
         const relBlocks = xmlText.match(/<\s*relationship\s*>[\s\S]*?<\/\s*relationship\s*>/gi) || [];
         relBlocks.forEach(block => {
-            let from = "", to = "", expl = "";
+            const fromMatch = block.match(/<from>([\s\S]*?)<\/from>/i);
+            const toMatch = block.match(/<to>([\s\S]*?)<\/to>/i);
+            const explMatch = block.match(/<explanation>([\s\S]*?)<\/explanation>/i);
 
-            // Try XML Tags
-            const xmlFrom = block.match(/<from>([\s\S]*?)<\/from>/i);
-            const xmlTo = block.match(/<to>([\s\S]*?)<\/to>/i);
-            const xmlExpl = block.match(/<explanation>([\s\S]*?)<\/explanation>/i);
-
-            if (xmlFrom && xmlTo) {
-                from = xmlFrom[1].trim();
-                to = xmlTo[1].trim();
-                expl = xmlExpl ? xmlExpl[1].trim() : "";
-            } else {
-                // Fallback Text
-                const textFrom = block.match(/from:\s*(.*?)(?:\n|$)/i);
-                const textTo = block.match(/to:\s*(.*?)(?:\n|$)/i);
-                const textExpl = block.match(/explanation:\s*([\s\S]*?)(?:<\/\s*relationship\s*>|$)/i);
-                
-                if (textFrom && textTo) {
-                    from = textFrom[1].trim();
-                    to = textTo[1].trim();
-                    expl = textExpl ? textExpl[1].trim() : "";
-                }
+            if (fromMatch && toMatch) {
+                const from = fromMatch[1].trim();
+                const to = toMatch[1].trim();
+                // Store standard key
+                map.rels[`${from}|${to}`] = explMatch ? explMatch[1].trim() : "";
+                // Store normalized key
+                map.rels[`${normalizeId(from)}|${normalizeId(to)}`] = map.rels[`${from}|${to}`];
             }
-            if (from && to) map.rels[`${from}|${to}`] = expl;
         });
         
-        // 3. Parse Groups
+        // Parse Groups
         const groupBlocks = xmlText.match(/<\s*group\s*>[\s\S]*?<\/\s*group\s*>/gi) || [];
         groupBlocks.forEach(block => {
-            let id = "", expl = "";
-            
-            // Try XML Tags
-            const xmlId = block.match(/<id>([\s\S]*?)<\/id>/i);
-            const xmlExpl = block.match(/<explanation>([\s\S]*?)<\/explanation>/i);
-            
-            if (xmlId) {
-                id = xmlId[1].trim();
-                expl = xmlExpl ? xmlExpl[1].trim() : "";
-            } else {
-                // Fallback Text
-                const textId = block.match(/id:\s*(.*?)(?:\n|$)/i);
-                const textExpl = block.match(/explanation:\s*([\s\S]*?)(?:<\/\s*group\s*>|$)/i);
-                if (textId) {
-                    id = textId[1].trim();
-                    expl = textExpl ? textExpl[1].trim() : "";
-                }
+            const idMatch = block.match(/<id>([\s\S]*?)<\/id>/i);
+            const explMatch = block.match(/<explanation>([\s\S]*?)<\/explanation>/i);
+            if (idMatch) {
+                const id = idMatch[1].trim();
+                map.groups[id] = explMatch ? explMatch[1].trim() : "";
             }
-            if (id) map.groups[id] = expl;
         });
 
     } catch (e) { console.warn("Explanation Parsing Failed:", e); }
@@ -125,27 +97,34 @@ export const parseDiagramResponse = (response) => {
   };
 
   const explMap = parseExplanations(explanations);
+  const nodeParentMap = {};
+  const groupIdToColorMap = {};
 
   // 1. Parse Groups
+  // Format: ID | Label | Children List
   const groupLines = extractSection(relationships, 'groups');
-  const groupIdToColorMap = {};
-  const nodeParentMap = {};
-
+  
   groupLines.forEach((line, index) => {
-    if (line.toLowerCase().includes("group |") || line.toLowerCase().includes("id |")) return;
+    const lower = line.toLowerCase();
+    // FIX: Only skip if starts with header
+    if (lower.startsWith("group |") || lower.startsWith("id |")) return;
     if (!line.includes("|")) return;
 
-    const parts = line.split('|').map(s => s.trim());
+    // Use safe split (3 parts: ID, Label, Children)
+    const parts = splitLine(line, 3);
+    
     if (parts.length >= 3) {
       const id = parts[0];
       const label = parts[1];
-      const children = parts[2].split(',').map(s => s.trim());
+      // Split children by comma, handle empty cases
+      const children = parts[2].split(',').map(s => s.trim()).filter(s => s);
 
       const theme = PALETTE[index % PALETTE.length];
       groupIdToColorMap[id] = theme;
 
+      // Map normalized child ID to parent ID
       children.forEach(child => {
-          nodeParentMap[child] = id;
+          nodeParentMap[normalizeId(child)] = id;
       });
 
       groups.push({
@@ -158,19 +137,30 @@ export const parseDiagramResponse = (response) => {
   });
 
   // 2. Parse Relationships
+  // Format: Source | Type | Target | Label
   const linkLines = extractSection(relationships, 'relationships');
   
   linkLines.forEach(line => {
-    if (line.toLowerCase().includes("source |") || line.toLowerCase().includes("node_a |")) return;
+    const lower = line.toLowerCase();
+    // FIX: Only skip if starts with header
+    if (lower.startsWith("source |") || lower.startsWith("node_a |")) return;
 
-    const parts = line.split('|').map(s => s.trim());
-    if (parts.length >= 4) {
+    // Use safe split (4 parts max, preserves pipes in label)
+    const parts = splitLine(line, 4);
+
+    if (parts.length >= 3) {
+      // Handle missing label scenario (Source | Type | Target) vs (Source | Type | Target | Label)
       const source = parts[0];
+      // Index 1 is often the arrow type (-->), we ignore it mostly
       const target = parts[2];
-      const label = parts[3].replace(/^label:\s*/i, "");
+      
+      // Default label to empty if missing
+      let label = parts[3] ? parts[3].replace(/^label:\s*/i, "") : "";
 
-      const key = `${source}|${target}`;
-      const richInfo = explMap.rels[key];
+      // Try fuzzy lookup for explanations
+      const exactKey = `${source}|${target}`;
+      const fuzzyKey = `${normalizeId(source)}|${normalizeId(target)}`;
+      const richInfo = explMap.rels[exactKey] || explMap.rels[fuzzyKey];
 
       links.push({
         source: source,
@@ -182,26 +172,30 @@ export const parseDiagramResponse = (response) => {
   });
 
   // 3. Parse Nodes
+  // Format: ID | Role
   const nodeLines = extractSection(structure, 'nodes');
   
   nodeLines.forEach(line => {
-    if (line.toLowerCase().includes("node_name |") || line.toLowerCase().includes("role")) return;
+    const lower = line.toLowerCase();
+    if (lower.startsWith("node_name |") || lower.startsWith("node |")) return;
     
-    const parts = line.split('|').map(s => s.trim());
+    // Safe split (2 parts: ID, Role)
+    const parts = splitLine(line, 2);
+
     if (parts.length >= 1) {
       const id = parts[0];
       const role = parts[1] || "Component";
       
-      const parentId = nodeParentMap[id];
+      // Use normalized ID to find parent group
+      const parentId = nodeParentMap[normalizeId(id)];
       const theme = parentId ? groupIdToColorMap[parentId] : null;
-      const richInfo = explMap.nodes[id];
-
-      // RAW OUTPUT: No prefix cleaning, no replacement
-      const displayLabel = id; 
+      
+      // Try fuzzy lookup for explanations
+      const richInfo = explMap.nodes[id] || explMap.nodes[normalizeId(id)];
 
       nodes.push({
         id: id,
-        label: displayLabel,
+        label: id,
         parent: parentId || null,
         color: theme ? theme.node : "#ffffff", 
         info: richInfo || role

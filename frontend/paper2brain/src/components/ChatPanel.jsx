@@ -1,6 +1,6 @@
 // ... (Imports remain the same: React, icons, etc.)
 import React, { useState, useRef, useEffect } from "react";
-import { FiPlus, FiX, FiUploadCloud, FiRefreshCw, FiArrowRight, FiTerminal, FiScissors, FiLayers, FiAlertCircle } from "react-icons/fi";
+import { FiPlus, FiX, FiUploadCloud, FiRefreshCw, FiArrowRight, FiTerminal, FiScissors, FiLayers, FiAlertCircle, FiCpu } from "react-icons/fi";
 import "./chat.css";
 import { parseDiagramResponse } from "./diagramParser";
 
@@ -22,8 +22,21 @@ export default function ChatPanel({ onDiagramGenerated, onSnipRequest, snippedNo
 
   const [isSnipActive, setIsSnipActive] = useState(false);
 
+  const [availableModels, setAvailableModels] = useState([]);
+  const [selectedModel, setSelectedModel] = useState("");
+
   const logsEndRef = useRef(null); 
   const chatEndRef = useRef(null);
+
+  useEffect(() => {
+    fetch("http://localhost:8000/api/models")
+      .then(res => res.json())
+      .then(data => {
+        setAvailableModels(data.models);
+        setSelectedModel(data.default);
+      })
+      .catch(err => console.error("Failed to fetch models", err));
+  }, []);
 
   useEffect(() => {
     if (logsEndRef.current) logsEndRef.current.scrollIntoView({ behavior: "smooth" });
@@ -76,6 +89,7 @@ export default function ChatPanel({ onDiagramGenerated, onSnipRequest, snippedNo
       formData.append("skip_explanations", skipExplanations);
       formData.append("use_fast_parse", useFastParse);
       formData.append("iterations", iterations);
+      formData.append("model_id", selectedModel);
       const response = await fetch("http://localhost:8000/api/generate", { method: "POST", body: formData });
       if (!response.ok) throw new Error(`HTTP Error: ${response.statusText}`);
       await readStream(response);
@@ -171,6 +185,34 @@ export default function ChatPanel({ onDiagramGenerated, onSnipRequest, snippedNo
                 <span className="label">User Prompt *</span>
                 <textarea placeholder="What specifically do you want to visualize?" value={prompt} onChange={(e) => setPrompt(e.target.value)} disabled={isProcessing} />
               </div>
+
+              <div style={{ marginTop: '15px' }}>
+                <span className="label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <FiCpu /> AI Model
+                </span>
+                <select 
+                    value={selectedModel} 
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                    disabled={isProcessing}
+                    style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '6px',
+                        border: '1px solid #ddd',
+                        backgroundColor: '#fff',
+                        fontSize: '14px',
+                        color: '#333',
+                        cursor: 'pointer'
+                    }}
+                >
+                    {availableModels.map((m) => (
+                        <option key={m.id} value={m.id}>
+                            {m.name}
+                        </option>
+                    ))}
+                </select>
+              </div>
+
               <div style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <input type="checkbox" id="skipExplanations" checked={skipExplanations} onChange={(e) => setSkipExplanations(e.target.checked)}/>
