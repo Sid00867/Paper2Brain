@@ -1,0 +1,168 @@
+{
+  "nodes": [
+    {
+      "id": "NEOWISE Single Exposure Database",
+      "label": "NEOWISE Single Exposure Database",
+      "parent": "group1",
+      "color": "#bbdefb",
+      "info": "Contains ~200 billion rows of single-exposure photometry. Each row is an apparition with RA, DEC, MJD timestamp, W1 and W2 magnitudes. Data is unordered and noisy, requiring clustering to reconstruct light curves."
+    },
+    {
+      "id": "SQL Data Query",
+      "label": "SQL Data Query",
+      "parent": "group1",
+      "color": "#bbdefb",
+      "info": "Retrieves subsets of apparitions matching sky coordinates or constraints. Output is unstructured and unlabeled observations."
+    },
+    {
+      "id": "DBSCAN Clustering",
+      "label": "DBSCAN Clustering",
+      "parent": "group2",
+      "color": "#e1bee7",
+      "info": "Density-based spatial clustering groups apparitions belonging to the same astronomical source using RA/DEC proximity. Filters noise and cosmic-ray artifacts."
+    },
+    {
+      "id": "Light Curve Assembly",
+      "label": "Light Curve Assembly",
+      "parent": "group2",
+      "color": "#e1bee7",
+      "info": "Clusters are converted into ordered time series using MJD timestamps, forming raw light curves per source."
+    },
+    {
+      "id": "Data Cleaning",
+      "label": "Data Cleaning",
+      "parent": "group3",
+      "color": "#c8e6c9",
+      "info": "Removes outliers, spurious detections, and low-quality measurements. Improves signal reliability."
+    },
+    {
+      "id": "Normalization",
+      "label": "Normalization",
+      "parent": "group3",
+      "color": "#c8e6c9",
+      "info": "Standardizes flux values, timestamps, and uncertainties to stable numeric ranges for neural network input."
+    },
+    {
+      "id": "Tensor Construction",
+      "label": "Tensor Construction",
+      "parent": "group3",
+      "color": "#c8e6c9",
+      "info": "Builds input tensors of shape (B, 3, N) containing flux, uncertainty, and timestamp channels."
+    },
+    {
+      "id": "Synthetic Light Curve Generator",
+      "label": "Synthetic Light Curve Generator",
+      "parent": "group4",
+      "color": "#ffe0b2",
+      "info": "Simulates unlimited labeled light curves for four classes: Null, Transient, Pulsating, Transit. Uses parametric models and noise injection."
+    },
+    {
+      "id": "Training Dataset",
+      "label": "Training Dataset",
+      "parent": "group4",
+      "color": "#ffe0b2",
+      "info": "Combination of synthetic curves and real validated infrared variables used to train VARnet."
+    },
+    {
+      "id": "Initial Convolution Layers",
+      "label": "Initial Convolution Layers",
+      "parent": "group5",
+      "color": "#d1c4e9",
+      "info": "Three 1D CNN layers extract low-level temporal patterns from input tensors."
+    },
+    {
+      "id": "Wavelet Decomposition",
+      "label": "Wavelet Decomposition",
+      "parent": "group5",
+      "color": "#d1c4e9",
+      "info": "Discrete Wavelet Transform (biorthogonal 2.2) splits signal into approximation and detail components to suppress noise and isolate transient impulses."
+    },
+    {
+      "id": "Feature Concatenation",
+      "label": "Feature Concatenation",
+      "parent": "group5",
+      "color": "#d1c4e9",
+      "info": "Original signal is concatenated with wavelet approximation and detail channels."
+    },
+    {
+      "id": "Mid Convolution Layers",
+      "label": "Mid Convolution Layers",
+      "parent": "group5",
+      "color": "#d1c4e9",
+      "info": "Three CNN layers compress features and prepare frequency-sensitive representations."
+    },
+    {
+      "id": "Finite Embedding Fourier Transform",
+      "label": "Finite Embedding Fourier Transform",
+      "parent": "group6",
+      "color": "#b2dfdb",
+      "info": "Custom DFT projection into fixed-size vector (700 samples). Learnable frequency sampling extracts periodic signatures efficiently."
+    },
+    {
+      "id": "Post Fourier CNN Layers",
+      "label": "Post Fourier CNN Layers",
+      "parent": "group6",
+      "color": "#b2dfdb",
+      "info": "Three convolution layers analyze local frequency neighborhoods."
+    },
+    {
+      "id": "Fully Connected Layers",
+      "label": "Fully Connected Layers",
+      "parent": "group7",
+      "color": "#ffcdd2",
+      "info": "Three dense layers map extracted features to class logits."
+    },
+    {
+      "id": "Softmax Layer",
+      "label": "Softmax Layer",
+      "parent": "group7",
+      "color": "#ffcdd2",
+      "info": "Converts logits into class probabilities."
+    },
+    {
+      "id": "Predicted Class",
+      "label": "Predicted Class",
+      "parent": "group7",
+      "color": "#ffcdd2",
+      "info": "Final classification: Null, Transient, Pulsating, Transit."
+    },
+    {
+      "id": "Human Inspection",
+      "label": "Human Inspection",
+      "parent": "group8",
+      "color": "#f0f4c3",
+      "info": "Flagged anomalies are cross-validated using SIMBAD, WISEView, and phase-folding."
+    }
+  ],
+
+  "links": [
+    {"source":"NEOWISE Single Exposure Database","target":"SQL Data Query","label":"query apparitions","info":"Subsets are retrieved for analysis"},
+    {"source":"SQL Data Query","target":"DBSCAN Clustering","label":"raw observations","info":"Unstructured points sent for spatial grouping"},
+    {"source":"DBSCAN Clustering","target":"Light Curve Assembly","label":"grouped clusters","info":"Clusters converted to time series"},
+    {"source":"Light Curve Assembly","target":"Data Cleaning","label":"raw light curves","info":"Noise filtering"},
+    {"source":"Data Cleaning","target":"Normalization","label":"cleaned data","info":"Standardization"},
+    {"source":"Normalization","target":"Tensor Construction","label":"normalized values","info":"Tensor encoding"},
+    {"source":"Synthetic Light Curve Generator","target":"Training Dataset","label":"generate labeled data","info":"Unlimited training samples"},
+    {"source":"Tensor Construction","target":"Initial Convolution Layers","label":"model input","info":"Forward pass"},
+    {"source":"Initial Convolution Layers","target":"Wavelet Decomposition","label":"feature maps","info":"Wavelet transform"},
+    {"source":"Wavelet Decomposition","target":"Feature Concatenation","label":"approx + detail","info":"Multi-scale fusion"},
+    {"source":"Feature Concatenation","target":"Mid Convolution Layers","label":"combined features","info":"Further abstraction"},
+    {"source":"Mid Convolution Layers","target":"Finite Embedding Fourier Transform","label":"compressed features","info":"Frequency extraction"},
+    {"source":"Finite Embedding Fourier Transform","target":"Post Fourier CNN Layers","label":"spectral vector","info":"Local frequency learning"},
+    {"source":"Post Fourier CNN Layers","target":"Fully Connected Layers","label":"high-level features","info":"Classification head"},
+    {"source":"Fully Connected Layers","target":"Softmax Layer","label":"logits","info":"Probability normalization"},
+    {"source":"Softmax Layer","target":"Predicted Class","label":"final output","info":"Four-class prediction"},
+    {"source":"Predicted Class","target":"Human Inspection","label":"flag anomalies","info":"Manual verification"}
+  ],
+
+  "groups": [
+    {"id":"group1","label":"Data Source","color":"#e3f2fd","info":"NEOWISE database access"},
+    {"id":"group2","label":"Clustering Pipeline","color":"#f3e5f5","info":"DBSCAN grouping"},
+    {"id":"group3","label":"Preprocessing","color":"#e8f5e9","info":"Cleaning & normalization"},
+    {"id":"group4","label":"Synthetic Data Generation","color":"#fff3e0","info":"Training data synthesis"},
+    {"id":"group5","label":"Wavelet Feature Extractor","color":"#ede7f6","info":"CNN + DWT block"},
+    {"id":"group6","label":"Fourier Feature Extractor","color":"#e0f2f1","info":"FEFT module"},
+    {"id":"group7","label":"Classification Head","color":"#ffebee","info":"Dense layers + softmax"},
+    {"id":"group8","label":"Post Validation","color":"#f9fbe7","info":"Human review"}
+  ]
+}

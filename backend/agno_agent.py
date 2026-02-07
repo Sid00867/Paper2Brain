@@ -97,10 +97,10 @@ def get_relevant_context(source_text: str, query: str, context_size: int = 3000)
     return "\n---\n".join(final_context)
 
 class LLMWorker:
-    def __init__(self, name, system_prompt, model_id="openai/gpt-oss-120b"):
+    def __init__(self, name, system_prompt, model_id="openai/gpt-oss-120b", api_key=None):
         self.name = name
-        # Use the passed model_id
-        self.agent = Agent(name=name, model=Groq(id=model_id), markdown=False)        
+        # Pass api_key to Groq. If None, it will automatically look for env var.
+        self.agent = Agent(name=name, model=Groq(id=model_id, api_key=api_key), markdown=False)        
         self.system_prompt = system_prompt
 
     def run(self, prompt: str) -> str:
@@ -117,11 +117,11 @@ class LLMWorker:
         return cleaned.strip()
 
 class Paper2BrainPipeline:
-    def __init__(self, model_id="openai/gpt-oss-120b"):
-        self.main_agent = LLMWorker("MainAgent", MAIN_AGENT_PROMPT, model_id=model_id)
-        self.relationship_agent = LLMWorker("RelationshipAgent", RELATIONSHIP_AGENT_PROMPT, model_id=model_id)
-        self.revision_agent = LLMWorker("RevisionAgent", REVISION_AGENT_PROMPT, model_id=model_id)
-        self.justifier_agent = LLMWorker("JustifierAgent", JUSTIFIER_AGENT_PROMPT, model_id=model_id)
+    def __init__(self, model_id="openai/gpt-oss-120b", api_key=None):
+        self.main_agent = LLMWorker("MainAgent", MAIN_AGENT_PROMPT, model_id=model_id, api_key=api_key)
+        self.relationship_agent = LLMWorker("RelationshipAgent", RELATIONSHIP_AGENT_PROMPT, model_id=model_id, api_key=api_key)
+        self.revision_agent = LLMWorker("RevisionAgent", REVISION_AGENT_PROMPT, model_id=model_id, api_key=api_key)
+        self.justifier_agent = LLMWorker("JustifierAgent", JUSTIFIER_AGENT_PROMPT, model_id=model_id, api_key=api_key)
         
         self.query_agent = LLMWorker("QueryAgent", 
             "You are a Search Decision Engine. "
@@ -130,7 +130,7 @@ class Paper2BrainPipeline:
             "1. If the user wants a simple graph edit (e.g. 'connect A to B', 'remove node X'), output: NO_SEARCH\n"
             "2. If the user asks for NEW information or details, output ONLY 3-5 specific technical keywords.\n"
             "3. DO NOT EXPLAIN. DO NOT ANSWER THE QUESTION. DO NOT WRITE SENTENCES.\n"
-            "4. Output ONLY the keywords or 'NO_SEARCH'.", model_id=model_id
+            "4. Output ONLY the keywords or 'NO_SEARCH'.", model_id=model_id, api_key=api_key
         )
 
     def _generate_search_query(self, user_request: str, structure_summary: str) -> str:

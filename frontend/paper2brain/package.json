@@ -21,6 +21,7 @@
     "html-to-image": "^1.11.13",
     "jointjs": "^3.7.7",
     "jquery": "^3.7.1",
+    "katex": "^0.16.27",
     "lodash": "^4.17.21",
     "react": "^19.2.0",
     "react-chat-ui-kit": "^1.0.0",

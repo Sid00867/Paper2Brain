@@ -1,0 +1,439 @@
+{
+  "nodes": [
+    {
+      "id": "NEOWISE database",
+      "label": "NEOWISE database",
+      "parent": "1",
+      "color": "#bbdefb",
+      "info": "source of raw apparitions"
+    },
+    {
+      "id": "Apparition query",
+      "label": "Apparition query",
+      "parent": "1",
+      "color": "#bbdefb",
+      "info": "extracts rows for a sky region"
+    },
+    {
+      "id": "Spatial clustering",
+      "label": "Spatial clustering",
+      "parent": "1",
+      "color": "#bbdefb",
+      "info": "groups nearby apparitions"
+    },
+    {
+      "id": "DBSCAN clustering",
+      "label": "DBSCAN clustering",
+      "parent": "1",
+      "color": "#bbdefb",
+      "info": "density‑based cluster algorithm"
+    },
+    {
+      "id": "Clustered light curve",
+      "label": "Clustered light curve",
+      "parent": "1",
+      "color": "#bbdefb",
+      "info": "ordered flux‑time series per source"
+    },
+    {
+      "id": "Normalization module",
+      "label": "Normalization module",
+      "parent": "1",
+      "color": "#bbdefb",
+      "info": "scales magnitudes and timestamps"
+    },
+    {
+      "id": "Batch generator",
+      "label": "Batch generator",
+      "parent": "1",
+      "color": "#bbdefb",
+      "info": "creates fixed‑size tensors for GPU"
+    },
+    {
+      "id": "Synthetic light curve generator",
+      "label": "Synthetic light curve generator",
+      "parent": "1",
+      "color": "#bbdefb",
+      "info": "produces labeled training examples"
+    },
+    {
+      "id": "Training dataset",
+      "label": "Training dataset",
+      "parent": "1",
+      "color": "#bbdefb",
+      "info": "collection of synthetic and real labeled curves"
+    },
+    {
+      "id": "Validation dataset",
+      "label": "Validation dataset",
+      "parent": "1",
+      "color": "#bbdefb",
+      "info": "held‑out real curves for evaluation"
+    },
+    {
+      "id": "Input tensor",
+      "label": "Input tensor",
+      "parent": "1",
+      "color": "#bbdefb",
+      "info": "stacked flux, uncertainty, timestamp channels"
+    },
+    {
+      "id": "Initial convolution block",
+      "label": "Initial convolution block",
+      "parent": "2",
+      "color": "#e1bee7",
+      "info": "extracts low‑level temporal features"
+    },
+    {
+      "id": "Wavelet decomposition block",
+      "label": "Wavelet decomposition block",
+      "parent": "2",
+      "color": "#e1bee7",
+      "info": "performs discrete wavelet transform"
+    },
+    {
+      "id": "Approximation coefficients",
+      "label": "Approximation coefficients",
+      "parent": "2",
+      "color": "#e1bee7",
+      "info": "low‑frequency wavelet output"
+    },
+    {
+      "id": "Detail coefficients",
+      "label": "Detail coefficients",
+      "parent": "2",
+      "color": "#e1bee7",
+      "info": "high‑frequency wavelet output"
+    },
+    {
+      "id": "Concatenation layer",
+      "label": "Concatenation layer",
+      "parent": "2",
+      "color": "#e1bee7",
+      "info": "merges original signal, approximation, detail"
+    },
+    {
+      "id": "Fourier feature extractor",
+      "label": "Fourier feature extractor",
+      "parent": "2",
+      "color": "#e1bee7",
+      "info": "projects sequence onto fixed‑size frequency representation"
+    },
+    {
+      "id": "Fourier feature vector",
+      "label": "Fourier feature vector",
+      "parent": "2",
+      "color": "#e1bee7",
+      "info": "compact frequency‑domain embedding"
+    },
+    {
+      "id": "Secondary convolution block",
+      "label": "Secondary convolution block",
+      "parent": "3",
+      "color": "#c8e6c9",
+      "info": "refines frequency‑domain features"
+    },
+    {
+      "id": "Fully connected head",
+      "label": "Fully connected head",
+      "parent": "3",
+      "color": "#c8e6c9",
+      "info": "maps features to class logits"
+    },
+    {
+      "id": "Softmax classifier",
+      "label": "Softmax classifier",
+      "parent": "3",
+      "color": "#c8e6c9",
+      "info": "converts logits to probability distribution"
+    },
+    {
+      "id": "Predicted class probabilities",
+      "label": "Predicted class probabilities",
+      "parent": "3",
+      "color": "#c8e6c9",
+      "info": "final output for each source"
+    },
+    {
+      "id": "Confidence filter",
+      "label": "Confidence filter",
+      "parent": "5",
+      "color": "#ffccbc",
+      "info": "selects high‑confidence predictions for review"
+    },
+    {
+      "id": "Human inspection interface",
+      "label": "Human inspection interface",
+      "parent": "5",
+      "color": "#ffccbc",
+      "info": "displays flagged anomalies for review"
+    },
+    {
+      "id": "Anomaly report",
+      "label": "Anomaly report",
+      "parent": "5",
+      "color": "#ffccbc",
+      "info": "summary of reviewed detections"
+    },
+    {
+      "id": "Cross‑entropy loss",
+      "label": "Cross‑entropy loss",
+      "parent": "4",
+      "color": "#ffe0b2",
+      "info": "training objective comparing predictions to targets"
+    },
+    {
+      "id": "Backpropagation updater",
+      "label": "Backpropagation updater",
+      "parent": "4",
+      "color": "#ffe0b2",
+      "info": "computes gradients and applies optimizer step"
+    },
+    {
+      "id": "AdamW optimizer",
+      "label": "AdamW optimizer",
+      "parent": "4",
+      "color": "#ffe0b2",
+      "info": "updates model weights during training"
+    },
+    {
+      "id": "Performance metrics",
+      "label": "Performance metrics",
+      "parent": "4",
+      "color": "#ffe0b2",
+      "info": "aggregates validation accuracy, loss, etc."
+    }
+  ],
+  "links": [
+    {
+      "source": "NEOWISE database",
+      "target": "Apparition query",
+      "label": "provides raw apparitions",
+      "info": "provides raw apparitions"
+    },
+    {
+      "source": "Apparition query",
+      "target": "Spatial clustering",
+      "label": "extracts region rows",
+      "info": "extracts region rows"
+    },
+    {
+      "source": "Spatial clustering",
+      "target": "DBSCAN clustering",
+      "label": "applies density‑based clustering",
+      "info": "applies density‑based clustering"
+    },
+    {
+      "source": "DBSCAN clustering",
+      "target": "Clustered light curve",
+      "label": "groups light curves per source",
+      "info": "groups light curves per source"
+    },
+    {
+      "source": "Clustered light curve",
+      "target": "Normalization module",
+      "label": "scales magnitudes/timestamps",
+      "info": "scales magnitudes/timestamps"
+    },
+    {
+      "source": "Normalization module",
+      "target": "Batch generator",
+      "label": "creates fixed‑size tensors",
+      "info": "creates fixed‑size tensors"
+    },
+    {
+      "source": "Synthetic light curve generator",
+      "target": "Training dataset",
+      "label": "adds labeled synthetic examples",
+      "info": "adds labeled synthetic examples"
+    },
+    {
+      "source": "Batch generator",
+      "target": "Training dataset",
+      "label": "yields training batches",
+      "info": "yields training batches"
+    },
+    {
+      "source": "Batch generator",
+      "target": "Validation dataset",
+      "label": "yields validation batches",
+      "info": "yields validation batches"
+    },
+    {
+      "source": "Training dataset",
+      "target": "Input tensor",
+      "label": "stacks flux, uncertainty, timestamp",
+      "info": "stacks flux, uncertainty, timestamp"
+    },
+    {
+      "source": "Validation dataset",
+      "target": "Input tensor",
+      "label": "stacks validation inputs",
+      "info": "stacks validation inputs"
+    },
+    {
+      "source": "Input tensor",
+      "target": "Initial convolution block",
+      "label": "feeds temporal channels",
+      "info": "feeds temporal channels"
+    },
+    {
+      "source": "Initial convolution block",
+      "target": "Wavelet decomposition block",
+      "label": "extracts low‑level features",
+      "info": "extracts low‑level features"
+    },
+    {
+      "source": "Wavelet decomposition block",
+      "target": "Approximation coefficients",
+      "label": "outputs low‑frequency component",
+      "info": "outputs low‑frequency component"
+    },
+    {
+      "source": "Wavelet decomposition block",
+      "target": "Detail coefficients",
+      "label": "outputs high‑frequency component",
+      "info": "outputs high‑frequency component"
+    },
+    {
+      "source": "Approximation coefficients",
+      "target": "Concatenation layer",
+      "label": "contributes to merged representation",
+      "info": "contributes to merged representation"
+    },
+    {
+      "source": "Detail coefficients",
+      "target": "Concatenation layer",
+      "label": "contributes to merged representation",
+      "info": "contributes to merged representation"
+    },
+    {
+      "source": "Input tensor",
+      "target": "Concatenation layer",
+      "label": "includes original signal",
+      "info": "includes original signal"
+    },
+    {
+      "source": "Concatenation layer",
+      "target": "Fourier feature extractor",
+      "label": "merges signals for frequency analysis",
+      "info": "merges signals for frequency analysis"
+    },
+    {
+      "source": "Fourier feature extractor",
+      "target": "Fourier feature vector",
+      "label": "produces compact frequency embedding",
+      "info": "produces compact frequency embedding"
+    },
+    {
+      "source": "Fourier feature vector",
+      "target": "Secondary convolution block",
+      "label": "feeds refined features",
+      "info": "feeds refined features"
+    },
+    {
+      "source": "Secondary convolution block",
+      "target": "Fully connected head",
+      "label": "refines frequency‑domain features",
+      "info": "refines frequency‑domain features"
+    },
+    {
+      "source": "Fully connected head",
+      "target": "Softmax classifier",
+      "label": "maps to class logits",
+      "info": "maps to class logits"
+    },
+    {
+      "source": "Softmax classifier",
+      "target": "Predicted class probabilities",
+      "label": "converts logits to probabilities",
+      "info": "converts logits to probabilities"
+    },
+    {
+      "source": "Predicted class probabilities",
+      "target": "Confidence filter",
+      "label": "selects high‑confidence predictions",
+      "info": "selects high‑confidence predictions"
+    },
+    {
+      "source": "Confidence filter",
+      "target": "Human inspection interface",
+      "label": "flags anomalies for review",
+      "info": "flags anomalies for review"
+    },
+    {
+      "source": "Human inspection interface",
+      "target": "Anomaly report",
+      "label": "generates summary of reviewed detections",
+      "info": "generates summary of reviewed detections"
+    },
+    {
+      "source": "Predicted class probabilities",
+      "target": "Cross‑entropy loss",
+      "label": "provides predictions for training loss",
+      "info": "provides predictions for training loss"
+    },
+    {
+      "source": "Training dataset",
+      "target": "Cross‑entropy loss",
+      "label": "provides target labels for loss",
+      "info": "provides target labels for loss"
+    },
+    {
+      "source": "Cross‑entropy loss",
+      "target": "Backpropagation updater",
+      "label": "computes gradients",
+      "info": "computes gradients"
+    },
+    {
+      "source": "Backpropagation updater",
+      "target": "AdamW optimizer",
+      "label": "applies optimizer step",
+      "info": "applies optimizer step"
+    },
+    {
+      "source": "AdamW optimizer",
+      "target": "Performance metrics",
+      "label": "updates training performance stats",
+      "info": "updates training performance stats"
+    },
+    {
+      "source": "Validation dataset",
+      "target": "Performance metrics",
+      "label": "evaluates validation accuracy/loss",
+      "info": "evaluates validation accuracy/loss"
+    }
+  ],
+  "groups": [
+    {
+      "id": "1",
+      "label": "Data Acquisition & Preprocessing",
+      "color": "#e3f2fd",
+      "info": "Group Container"
+    },
+    {
+      "id": "2",
+      "label": "Wavelet & Fourier Feature Extraction",
+      "color": "#f3e5f5",
+      "info": "Group Container"
+    },
+    {
+      "id": "3",
+      "label": "Deep Model Core",
+      "color": "#e8f5e9",
+      "info": "Group Container"
+    },
+    {
+      "id": "4",
+      "label": "Training & Optimization",
+      "color": "#fff3e0",
+      "info": "Group Container"
+    },
+    {
+      "id": "5",
+      "label": "Post‑Processing & Review",
+      "color": "#fbe9e7",
+      "info": "Group Container"
+    }
+  ]
+}

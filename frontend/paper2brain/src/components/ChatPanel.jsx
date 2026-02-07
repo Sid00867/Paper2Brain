@@ -1,6 +1,6 @@
 // ... (Imports remain the same: React, icons, etc.)
 import React, { useState, useRef, useEffect } from "react";
-import { FiPlus, FiX, FiUploadCloud, FiRefreshCw, FiArrowRight, FiTerminal, FiScissors, FiLayers, FiAlertCircle, FiCpu } from "react-icons/fi";
+import { FiPlus, FiX, FiUploadCloud, FiRefreshCw, FiArrowRight, FiTerminal, FiScissors, FiLayers, FiAlertCircle, FiCpu, FiKey } from "react-icons/fi";
 import "./chat.css";
 import { parseDiagramResponse } from "./diagramParser";
 
@@ -19,6 +19,8 @@ export default function ChatPanel({ onDiagramGenerated, onSnipRequest, snippedNo
   const [useFastParse, setUseFastParse] = useState(false);
   const [iterations, setIterations] = useState(2); 
   const [contextSize, setContextSize] = useState(3000);
+  // NEW: State for API Key
+  const [apiKey, setApiKey] = useState("");
 
   const [isSnipActive, setIsSnipActive] = useState(false);
 
@@ -90,6 +92,7 @@ export default function ChatPanel({ onDiagramGenerated, onSnipRequest, snippedNo
       formData.append("use_fast_parse", useFastParse);
       formData.append("iterations", iterations);
       formData.append("model_id", selectedModel);
+      if (apiKey) formData.append("api_key", apiKey);
       const response = await fetch("http://localhost:8000/api/generate", { method: "POST", body: formData });
       if (!response.ok) throw new Error(`HTTP Error: ${response.statusText}`);
       await readStream(response);
@@ -124,6 +127,7 @@ export default function ChatPanel({ onDiagramGenerated, onSnipRequest, snippedNo
       formData.append("snipped_nodes", snippedNodes.join(", "));
       formData.append("skip_explanations", skipExplanations);
       formData.append("context_size", contextSize); 
+      if (apiKey) formData.append("api_key", apiKey);
 
       const response = await fetch("http://localhost:8000/api/revise", { method: "POST", body: formData });
       if (!response.ok) throw new Error(`HTTP Error: ${response.statusText}`);
@@ -211,6 +215,28 @@ export default function ChatPanel({ onDiagramGenerated, onSnipRequest, snippedNo
                         </option>
                     ))}
                 </select>
+              </div>
+
+              <div style={{ marginTop: '15px' }}>
+                <span className="label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <FiKey /> Groq API Key (Optional)
+                </span>
+                <input 
+                    type="password" 
+                    placeholder="Enter key to override .env..." 
+                    value={apiKey} 
+                    onChange={(e) => setApiKey(e.target.value)}
+                    disabled={isProcessing}
+                    style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '6px',
+                        border: '1px solid #ddd',
+                        backgroundColor: '#fff',
+                        fontSize: '14px',
+                        color: '#333'
+                    }}
+                />
               </div>
 
               <div style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '8px' }}>

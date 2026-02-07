@@ -66,20 +66,20 @@ async def debug_and_stream(generator_func):
 
 # --- Updated Generators using the Debug Helper ---
 
-async def stream_generator(source_text: str, user_prompt: str, skip_explanations: bool, iterations: int, model_id: str):
+async def stream_generator(source_text: str, user_prompt: str, skip_explanations: bool, iterations: int, model_id: str, api_key: str = None):
     try:
-        # Pass model_id to the pipeline
-        pipeline = Paper2BrainPipeline(model_id=model_id)
+        # Pass api_key to Pipeline
+        pipeline = Paper2BrainPipeline(model_id=model_id, api_key=api_key) 
         gen = pipeline.run_generator(source_text, user_prompt, skip_explanations, iterations)
         async for chunk in debug_and_stream(gen):
             yield chunk
     except Exception as e:
         yield json.dumps({"type": "error", "message": str(e)}) + "\n"
 
-async def revision_stream_generator(prompt, structure, relationships, source_text, snip, skip_explanations, context_size):
+async def revision_stream_generator(prompt, structure, relationships, source_text, snip, skip_explanations, context_size, api_key: str = None):
     try:
-        pipeline = Paper2BrainPipeline()
-        # Wrap the generator in our debug helper
+        # Pass api_key to Pipeline
+        pipeline = Paper2BrainPipeline(api_key=api_key) 
         gen = pipeline.run_revision_generator(prompt, structure, relationships, source_text, snip, skip_explanations, context_size)
         async for chunk in debug_and_stream(gen):
             yield chunk
@@ -93,6 +93,7 @@ async def generate_diagram(
     use_fast_parse: bool = Form(False),
     iterations: int = Form(2),
     model_id: str = Form("openai/gpt-oss-120b"),
+    api_key: str = Form(None),
     file: UploadFile = File(...)
 ):
     temp_filename = f"temp_{file.filename}"
@@ -111,9 +112,9 @@ async def generate_diagram(
             raise HTTPException(status_code=400, detail="Document empty.")
 
         return StreamingResponse(
-            stream_generator(source_text, prompt, skip_explanations, iterations, model_id),
-            media_type="application/x-ndjson"
-        )
+                stream_generator(source_text, prompt, skip_explanations, iterations, model_id, api_key),
+                media_type="application/x-ndjson"
+            )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
@@ -129,12 +130,15 @@ async def revise_diagram(
     source_text_memory: str = Form(""), 
     snipped_nodes: str = Form(""), 
     skip_explanations: bool = Form(False),
-    context_size: int = Form(3000)
+    context_size: int = Form(3000),
+    api_key: str = Form(None) # NEW: Accept api_key
 ):
     return StreamingResponse(
-        revision_stream_generator(prompt, current_structure, current_relationships, source_text_memory, snipped_nodes, skip_explanations, context_size),
+        # Pass api_key to generator
+        revision_stream_generator(prompt, current_structure, current_relationships, source_text_memory, snipped_nodes, skip_explanations, context_size, api_key),
         media_type="application/x-ndjson"
     )
+
 
 if __name__ == "__main__":
     uvicorn.run("api:app", host="0.0.0.0", port=8000, reload=True)
