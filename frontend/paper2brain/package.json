@@ -24,7 +24,6 @@
     "katex": "^0.16.27",
     "lodash": "^4.17.21",
     "react": "^19.2.0",
-    "react-chat-ui-kit": "^1.0.0",
     "react-dom": "^19.2.0",
     "react-dropzone": "^14.3.8",
     "react-icons": "^5.5.0",
