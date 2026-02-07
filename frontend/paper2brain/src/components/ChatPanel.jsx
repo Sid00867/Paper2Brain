@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { FiPlus, FiX, FiUploadCloud, FiRefreshCw, FiArrowRight, FiTerminal, FiScissors, FiLayers, FiAlertCircle, FiCpu, FiKey } from "react-icons/fi";
 import "./chat.css";
 import { parseDiagramResponse } from "./diagramParser";
+const SERVER_URL = import.meta.env.VITE_API_URL;
 
 export default function ChatPanel({ onDiagramGenerated, onSnipRequest, snippedNodes = [], onRemoveSnippedNode }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,7 +32,7 @@ export default function ChatPanel({ onDiagramGenerated, onSnipRequest, snippedNo
   const chatEndRef = useRef(null);
 
   useEffect(() => {
-    fetch("http://localhost:8000/api/models")
+    fetch(`${SERVER_URL}/api/models`)
       .then(res => res.json())
       .then(data => {
         setAvailableModels(data.models);
@@ -93,7 +94,7 @@ export default function ChatPanel({ onDiagramGenerated, onSnipRequest, snippedNo
       formData.append("iterations", iterations);
       formData.append("model_id", selectedModel);
       if (apiKey) formData.append("api_key", apiKey);
-      const response = await fetch("http://localhost:8000/api/generate", { method: "POST", body: formData });
+      const response = await fetch(`${SERVER_URL}/api/generate`, { method: "POST", body: formData });
       if (!response.ok) throw new Error(`HTTP Error: ${response.statusText}`);
       await readStream(response);
       setViewMode('chat'); 
@@ -129,7 +130,7 @@ export default function ChatPanel({ onDiagramGenerated, onSnipRequest, snippedNo
       formData.append("context_size", contextSize); 
       if (apiKey) formData.append("api_key", apiKey);
 
-      const response = await fetch("http://localhost:8000/api/revise", { method: "POST", body: formData });
+      const response = await fetch(`${SERVER_URL}/api/revise`, { method: "POST", body: formData });
       if (!response.ok) throw new Error(`HTTP Error: ${response.statusText}`);
       await readStream(response);
 
