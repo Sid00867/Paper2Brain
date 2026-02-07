@@ -14,7 +14,7 @@ import 'reactflow/dist/style.css';
 import ELK from "elkjs/lib/elk.bundled.js";
 import { toPng } from 'html-to-image'; 
 
-import Popup from "./Popup";
+import Popup from "./popup";
 import ElkEdge from "./ElkEdge";
 import { FiEye, FiEyeOff, FiDownload, FiCode, FiUpload } from "react-icons/fi";
 
